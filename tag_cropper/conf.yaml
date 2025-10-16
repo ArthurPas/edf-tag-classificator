@@ -1,0 +1,5 @@
+nc: 1
+names: ['Tag']
+path: .
+train: ./data/train
+val: ./data/val
