@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RF-finder</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h2 {
+            margin-bottom: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Search Input Styling */
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Results Layout */
+        h3 {
+            align-self: flex-start;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto 16px auto;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        #resultsList {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            width: 100%;
+        }
+
+        /* Card Styling */
+        .result-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .img-container {
+            width: 100%;
+            height: 200px;
+            background-color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: zoom-in; /* Curseur loupe */
+        }
+
+        .result-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        /* Petit effet de zoom au survol de la miniature */
+        .img-container:hover img {
+            transform: scale(1.05);
+        }
+
+        .info-container {
+            padding: 16px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-container strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-badge {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-block;
+        }
+
+        .no-results {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 20px;
+        }
+
+        /* --- MODAL (LIGHTBOX) STYLES --- */
+        .modal {
+            display: none; /* Caché par défaut */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85); /* Fond noir transparent */
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            animation-name: zoom;
+            animation-duration: 0.3s;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        @keyframes zoom {
+            from {transform:scale(0)}
+            to {transform:scale(1)}
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Trouver une photo de pièce par son RF</h2>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Entrez un RF (ex. 1AGR615MTT)" autocomplete="off">
+    </div>
+    
+    <h3>Results</h3>
+    <div id="resultsList"></div>
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+    </div>
+
+    <script src="../data/rf_database.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('searchInput');
+            input.focus(); 
+            input.addEventListener('input', function() {
+                if (input.value.trim().length > 3) {
+                    searchByTag();
+                } else {
+                    document.getElementById('resultsList').innerHTML = "";
+                }
+            });
+
+            // Fermer la modale si on clique en dehors de l'image
+            const modal = document.getElementById("imageModal");
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        });
+
+        function searchByTag() {
+            const searchTag = document.getElementById('searchInput').value.trim();
+            const container = document.getElementById('resultsList');
+            container.innerHTML = "";
+
+            if (!searchTag) return;
+
+            const foundImages = [];
+            for (const [imageName, tagList] of Object.entries(DATABASE)) {
+                if (tagList.some(tag => tag.includes(searchTag))) {
+                    foundImages.push({ imageName, tags: tagList });
+                }
+            }
+
+            if (foundImages.length > 0) {
+                const gridDiv = document.createElement("div");
+                gridDiv.className = "results-grid";
+
+                foundImages.forEach(item => {
+                    const card = document.createElement("div");
+                    card.className = "result-item";
+
+                    // Image Section
+                    const imgDiv = document.createElement("div");
+                    imgDiv.className = "img-container";
+                    
+                    const img = document.createElement("img");
+                    const imgUrl = "../data/images/" + item.imageName;
+                    img.src = imgUrl;
+                    img.alt = item.imageName;
+                    
+                    // --- AJOUT : CLICK POUR OUVRIR LA MODALE ---
+                    img.onclick = function() {
+                        openModal(imgUrl);
+                    };
+
+                    img.onerror = function() { 
+                        this.style.display = 'none';
+                        imgDiv.innerHTML = '<span style="color:#94a3b8">No Preview</span>';
+                        // Désactive le click si pas d'image
+                        imgDiv.style.pointerEvents = 'none';
+                    };
+                    imgDiv.appendChild(img);
+
+                    // Info Section
+                    const infoDiv = document.createElement("div");
+                    infoDiv.className = "info-container";
+
+                    const foundTags = item.tags.filter(tag => tag.includes(searchTag));
+                    
+                    const label = document.createElement("strong");
+                    label.innerText = "Match found:";
+                    
+                    const tagDisplay = document.createElement("span");
+                    tagDisplay.className = "tag-badge";
+                    tagDisplay.innerText = foundTags.join(", ");
+
+                    infoDiv.appendChild(label);
+                    infoDiv.appendChild(tagDisplay);
+
+                    card.appendChild(imgDiv);
+                    card.appendChild(infoDiv);
+                    
+                    gridDiv.appendChild(card);
+                });
+
+                container.appendChild(gridDiv);
+            } else {
+                container.innerHTML = "<p class='no-results'>No image contains this tag.</p>";
+            }
+        }
+
+        // --- FONCTIONS POUR LA MODALE ---
+        function openModal(src) {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("modalImg");
+            modal.style.display = "flex"; // Utilise flex pour centrer
+            modalImg.src = src;
+        }
+
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+    </script>
+</body>
+</html>
