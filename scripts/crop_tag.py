@@ -24,8 +24,8 @@ def crop_tag(image_path, model_path, output_dir, file_name):
             x2 = min(image.shape[1], x2 + padding)
             y2 = min(image.shape[0], y2 + padding)
             cropped_image = image[y1:y2, x1:x2]  # Crop the image
-            output_path = os.path.join(output_dir, f"{file_name}_{i}.png")
-            cv2.imwrite(f"{output_path}.png", cropped_image) # Save the cropped image
+            output_path = os.path.join(output_dir, f"{file_name}_{i}.jpg")
+            cv2.imwrite(f"{output_path}", cropped_image) # Save the cropped image
             print(f"Cropped image saved to {output_path}")
             i += 1
 
