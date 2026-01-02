@@ -20,9 +20,6 @@ def store_tag(file_path, tag):
     con.commit()
     con.close()
 
-import sqlite3
-import json
-
 
 def convert_db_to_js():
     try:
